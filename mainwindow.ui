@@ -404,7 +404,7 @@
                 <item>
                  <widget class="QLabel" name="urlF">
                   <property name="text">
-                   <string>e-hentai</string>
+                   <string>&lt;a href=&quot;https://e-hentai.org&quot;&gt;e-hentai&lt;/a&gt;</string>
                   </property>
                   <property name="openExternalLinks">
                    <bool>true</bool>
@@ -414,7 +414,7 @@
                 <item>
                  <widget class="QLabel" name="urlB">
                   <property name="text">
-                   <string>exhentai</string>
+                   <string>&lt;a href=&quot;https://exhentai.org&quot;&gt;exhentai&lt;/a&gt;</string>
                   </property>
                   <property name="openExternalLinks">
                    <bool>true</bool>

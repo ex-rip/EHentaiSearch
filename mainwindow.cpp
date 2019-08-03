@@ -19,7 +19,7 @@ static QSettings* setting;
 static bool thumb_enable;
 static QString thumb_prefix;
 static QString thumb_suffix;
-const char thumb_aes_key[17] = "awslawslawslawsl";
+static QByteArray thumb_aes_key;
 
 //const QString dbpath = R"(C:\Users\liaoh\Documents\EHentaiSearch\eh.db)";
 static QString dbpath;
@@ -73,13 +73,14 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
 	thumb_enable = setting->value("thumb/enable", false).toBool();
 	thumb_prefix = setting->value("thumb/prefix", "").toString();
 	thumb_suffix = setting->value("thumb/suffix", "").toString();
+	thumb_aes_key = setting->value("thumb/password", QByteArray("awslawslawslawsl")).toByteArray();
 	database = QSqlDatabase::addDatabase("QSQLITE");
 	database.setDatabaseName(dbpath);
 	if (!database.open()) {
 		QMessageBox::critical(this, "EHentaiSearch", "无法打开数据库");
 		exit(0);
 	}
-	QLabel* update = new QLabel("构建于 " __DATE__ " " __TIME__ " <a href='http://github.com/ex-rip/EHentaiSearch'>主页</a>", ui->status);
+	QLabel* update = new QLabel("构建于 " __DATE__ " " __TIME__ " <a href='http://github.com/ex-rip/EHentaiSearch'>主页与帮助</a>", ui->status);
 	update->setOpenExternalLinks(true);
 	ui->status->addPermanentWidget(update);
 	query = QSqlQuery(database);
@@ -243,7 +244,7 @@ QByteArray decryption(QByteArray data) {
 	int len = data.length();
 	int blocks = len >> 4;
 	unsigned char* ptr = reinterpret_cast<unsigned char*>(data.data());
-	CryptoPP::AES::Decryption aesDecryption(reinterpret_cast<const unsigned char*>(thumb_aes_key), 16);
+	CryptoPP::AES::Decryption aesDecryption(reinterpret_cast<const unsigned char*>(thumb_aes_key.data()), 16);
 	while (blocks--) {
 		aesDecryption.ProcessBlock(ptr);
 		ptr += 16;
