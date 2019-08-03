@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1096</width>
-    <height>578</height>
+    <width>633</width>
+    <height>480</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -108,6 +108,9 @@
          <layout class="QHBoxLayout" name="horizontalLayout_4">
           <item>
            <widget class="QToolButton" name="prev">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
             <property name="text">
              <string>&lt;</string>
             </property>
@@ -143,6 +146,9 @@
           </item>
           <item>
            <widget class="QToolButton" name="next">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
             <property name="text">
              <string>&gt;</string>
             </property>

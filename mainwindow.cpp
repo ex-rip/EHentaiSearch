@@ -323,6 +323,9 @@ void MainWindow::updateInfo(int r) {
 		ui->urlB->setText("<a href=\"" + query.value(24).toString() + "\">exhentai</a>");
 		if (thumb_enable) {
 			int id = query.value(0).toString().toInt();
+			if (!QDir("cache").exists()) {
+				QDir().mkdir("cache");
+			}
 			QString cache = QString("cache") + QDir::separator() + QString::asprintf("%d", id);
 			if (!QFile::exists(cache)) {
 				int gid = (id - 1) / 32 + 1;
