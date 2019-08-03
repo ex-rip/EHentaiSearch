@@ -4,7 +4,7 @@
 
 [数据库](https://pan.baidu.com/s/18xSrYlx29NkSYfby3ct01A) 密码 p0q1
 
-[程序](https://github.com/ex-rip/EHentaiSearch/releases/download/1.0.0/release.7z)
+[程序](https://github.com/ex-rip/EHentaiSearch/releases/latest/download/release.7z)
 
 [QT依赖](https://github.com/ex-rip/EHentaiSearch/releases/download/1.0.0/depend.7z) 如果安装了QT并添加到PATH，就不需要这个包
 
