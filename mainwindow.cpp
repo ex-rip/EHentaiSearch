@@ -23,6 +23,7 @@ static QByteArray thumb_aes_key;
 
 //const QString dbpath = R"(C:\Users\liaoh\Documents\EHentaiSearch\eh.db)";
 static QString dbpath;
+static int result_limit;
 
 QMap<QString, QVector<QString>> parseTag(QString tags) {
 	QMap<QString, QSet<QString>> result;
@@ -70,6 +71,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
 	order = orders[0];
 	setting = new QSettings("EHentaiSearch.ini", QSettings::IniFormat);
 	dbpath = setting->value("database/path", "eh.db").toString();
+	result_limit = setting->value("database/limit", 20).toInt();
 	thumb_enable = setting->value("thumb/enable", false).toBool();
 	thumb_prefix = setting->value("thumb/prefix", "").toString();
 	thumb_suffix = setting->value("thumb/suffix", "").toString();
@@ -115,8 +117,8 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
 		movePage(n);
 	});
 	connect(ui->search, &QPushButton::clicked, [&]() {
-		disconnect(ui->result);
-		disconnect(ui->page);
+		ui->result->disconnect();
+		ui->page->disconnect();
 		ui->result->clear();
 		ui->status->showMessage("搜索中，请稍候。");
 		ui->status->repaint();
@@ -129,17 +131,17 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
 		ui->status->showMessage("搜索出结果" + QString::asprintf("%d", results) + "条。搜索中，请稍候。");
 		ui->status->repaint();
 		if (results) {
-			ui->page->setEnabled(results > 20);
-			maxpage = (results - 1) / 20 + 1;
+			ui->page->setEnabled(results > result_limit);
+			maxpage = (results - 1) / result_limit + 1;
 			curpage = 1;
-			ui->page->setRange(1, (results - 1) / 20 + 1);
+			ui->page->setRange(1, (results - 1) / result_limit + 1);
 			ui->page->setValue(1);
 			ui->prev->setEnabled(false);
 			ui->next->setEnabled(maxpage > 1);
 			connect(ui->page, &QSpinBox::editingFinished, [&]() {
 				this->movePage(ui->page->value());
 			});
-			if (!query.exec("select * from gallery " + genWhere() + " order by " + by + order + " limit 20;")) {
+			if (!query.exec("select * from gallery " + genWhere() + " order by " + by + order + QString::asprintf(" limit %d;", result_limit))) {
 				QMessageBox::critical(this, "EX R.I.P.", "搜索失败:" + query.lastError().text());
 				exit(0);
 			}
@@ -190,7 +192,7 @@ QString MainWindow::genWhere() {
 			for (const QString& v: tags[k]) {
 				rst += v + "%";
 			}
-			likes.push_back(k + " like '" + rst + "'");
+			likes.push_back(k + " like '" + rst + "' escape '/'");
 		}
 	}
 	if (tags["misc"].size()) {
@@ -198,11 +200,12 @@ QString MainWindow::genWhere() {
 		for (const QString& v: tags["misc"]) {
 			rst += v + "%";
 		}
-		likes.push_back("rest like '" + rst + "'");
+		likes.push_back("rest like '" + rst + "' escape '/'");
 	}
 	if (tags["category"].size()) {
 		QList<QString> categories;
 		for (QString category: tags["category"]) {
+			category = category.toLower();
 			category[0] = category[0].toUpper();
 			categories.push_back("category = '" + category + "'");
 		}
@@ -235,7 +238,7 @@ QString MainWindow::genWhere() {
 					.replace("_", "/_")
 					.replace("(", "/(")
 					.replace(")", "/)");
-		tit = "title like '%" + s + "%' or title_jpn like '%" + s + "%'";
+		tit = "title like '%" + s + "%' escape '/' or title_jpn like '%" + s + "%' escape '/'";
 	}
 	return tag.length() ? (tit.length() ? " where ( " + tit + " ) and ( " + tag + " )" : " where " + tag) : (tit.length() ? " where " + tit : "");
 }
@@ -264,7 +267,7 @@ void MainWindow::updateInfo(int r) {
 		}
 	};
 	if (reply) {
-		disconnect(reply);
+		reply->disconnect();
 		reply->abort();
 		reply->deleteLater();
 		reply = nullptr;
@@ -287,8 +290,7 @@ void MainWindow::updateInfo(int r) {
 		ui->character->clear();
 		ui->urlF->setText("<a href=\"https://e-hentai.org/\">e-hentai</a>");
 		ui->urlB->setText("<a href=\"https://exhentai.org/\">exhentai</a>");
-		QPixmap pix(":/ex.jpg");
-		ui->thumb->setPixmap(pix);
+		ui->thumb->setPixmap(QPixmap(":/ex.jpg"));
 	} else {
 		query.seek(r);
 		ui->id->setText(query.value(0).toString());
@@ -328,22 +330,27 @@ void MainWindow::updateInfo(int r) {
 			}
 			QString cache = QString("cache") + QDir::separator() + QString::asprintf("%d", id);
 			if (!QFile::exists(cache)) {
-				int gid = (id - 1) / 32 + 1;
-				QString url = thumb_prefix + QString::asprintf("%d", gid) + thumb_suffix;
+				ui->thumb->setPixmap(QPixmap(":/ex.jpg"));
+				QString url = thumb_prefix + QString::asprintf("%d", id) + thumb_suffix;
 				reply = manager.get(QNetworkRequest(QUrl(url)));
 				ui->status->showMessage(message + "正在下载封面。");
 				ui->status->repaint();
 				connect(reply, &QNetworkReply::finished, [&]() {
-					QByteArray data = reply->readAll();
-					disconnect(reply);
-					reply->deleteLater();
-					reply = nullptr;
-					QString cache = QString("cache") + QDir::separator() + QString::asprintf("%d", query.value(0).toString().toInt());
-					QFile file(cache);
-					file.open(QIODevice::WriteOnly);
-					file.write(data);
-					file.close();
-					updateThumb(data);
+					auto err = reply->error();
+					if (err) {
+						QMessageBox::warning(this, "EHentaiSearch", "无法加载图片 " + reply->errorString());
+					} else {
+						QByteArray data = reply->readAll();
+						reply->disconnect();
+						reply->deleteLater();
+						reply = nullptr;
+						QString cache = QString("cache") + QDir::separator() + QString::asprintf("%d", query.value(0).toString().toInt());
+						QFile file(cache);
+						file.open(QIODevice::WriteOnly);
+						file.write(data);
+						file.close();
+						updateThumb(data);
+					}
 					ui->status->showMessage(message);
 					ui->status->repaint();
 				});
@@ -371,9 +378,9 @@ void MainWindow::updateThumb(const QByteArray& data) {
 
 void MainWindow::movePage(int p) {
 	curpage = p;
-	disconnect(ui->result);
+	ui->result->disconnect();
 	ui->result->clear();
-	if (!query.exec("select * from gallery " + genWhere() + " order by " + by + order + " limit 20 offset " + QString::asprintf("%d", (p - 1) * 20) + ";")) {
+	if (!query.exec("select * from gallery " + genWhere() + " order by " + by + order + QString::asprintf(" limit %d offset ", result_limit) + QString::asprintf("%d", (p - 1) * result_limit) + ";")) {
 		QMessageBox::critical(this, "EX R.I.P.", "搜索失败:" + query.lastError().text());
 		exit(0);
 	}
