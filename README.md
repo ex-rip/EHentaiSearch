@@ -6,7 +6,7 @@
 
 [程序](https://github.com/ex-rip/EHentaiSearch/releases/latest/download/release.7z)
 
-[QT依赖](https://github.com/ex-rip/EHentaiSearch/releases/download/1.0.0/depend.7z) 如果安装了QT并添加到PATH，就不需要这个包
+[QT依赖](https://github.com/ex-rip/EHentaiSearch/releases/download/1.0.3/depend.7z) 如果安装了QT并添加到PATH，就不需要这个包
 
 ## 使用
 
