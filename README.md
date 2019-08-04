@@ -1,3 +1,5 @@
+![](https://github.com/ex-rip/ehdown/raw/master/ex.jpg)
+
 # e站搜索工具（本地）
 
 使用e站的数据库
@@ -21,9 +23,9 @@
 格式：类:值
 
 * id：符号 数值
-	* id:>4 id:<=10
+	* id:>4
+	* id:<=10
 * category：类别
-	* category:doujinshi
 * rating：评分 同id
 * artist：艺术家
 * group：组织
@@ -40,25 +42,23 @@
 
 #### enable
 
-是否启用
+是否启用 true/false
 
 #### prefix suffix
 
-封面链接的前缀后缀
+封面链接的前缀、后缀
 
 #### password
 
 aes加密的密码
 
-aes加密使用256bit
+aes加密使用__256bit__
 
-### database
+### database 数据库
 
 #### path
 
 数据库路径
-
-![](https://github.com/ex-rip/ehdown/raw/master/ex.jpg)
 
 #### limit
 
