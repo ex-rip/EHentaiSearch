@@ -60,3 +60,6 @@ aes加密使用256bit
 
 ![](https://github.com/ex-rip/ehdown/raw/master/ex.jpg)
 
+#### limit
+
+每一页显示结果数
